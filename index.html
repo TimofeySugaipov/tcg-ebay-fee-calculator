@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eBay UK TCG Fee Calculator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #222222;
+            --secondary-color: #111111;
+            --success-color: #333333;
+            --light-bg: #f5f5f5;
+            --mid-gray: #666666;
+            --border-color: #dddddd;
+        }
+
+        body {
+            background: linear-gradient(135deg, #e8e8e8 0%, #d0d0d0 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .calculator-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: var(--secondary-color);
+            color: white;
+            padding: 1.5rem;
+        }
+
+        .card-header h1 {
+            font-size: 1.5rem;
+            margin: 0;
+            font-weight: 600;
+        }
+
+        .card-body {
+            padding: 2rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: var(--secondary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-control, .form-select {
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #333333;
+            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
+        }
+
+        /* Custom dropdown styling */
+        .custom-dropdown {
+            position: relative;
+        }
+
+        .custom-dropdown .dropdown-toggle {
+            width: 100%;
+            text-align: left;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            color: var(--secondary-color);
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .custom-dropdown .dropdown-toggle:hover {
+            border-color: #ccc;
+        }
+
+        .custom-dropdown .dropdown-toggle:focus,
+        .custom-dropdown.show .dropdown-toggle {
+            border-color: #333333;
+            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.08);
+        }
+
+        .custom-dropdown .dropdown-toggle::after {
+            margin-left: auto;
+            border: none;
+            content: '\F282';
+            font-family: 'bootstrap-icons';
+            transition: transform 0.2s ease;
+        }
+
+        .custom-dropdown.show .dropdown-toggle::after {
+            transform: rotate(180deg);
+        }
+
+        .custom-dropdown .dropdown-menu {
+            width: 100%;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 0.5rem;
+            margin-top: 4px;
+        }
+
+        .custom-dropdown .dropdown-item {
+            border-radius: 6px;
+            padding: 0.6rem 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .custom-dropdown .dropdown-item:hover {
+            background: var(--light-bg);
+        }
+
+        .custom-dropdown .dropdown-item.active,
+        .custom-dropdown .dropdown-item:active {
+            background: #333333;
+            color: white;
+        }
+
+        .input-group-text {
+            background: var(--light-bg);
+            border: 2px solid #e0e0e0;
+            border-right: none;
+            font-weight: 600;
+        }
+
+        .input-group .form-control {
+            border-left: none;
+        }
+
+        .results-section {
+            background: var(--light-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .result-row:last-child {
+            border-bottom: none;
+        }
+
+        .result-row.sub-row {
+            padding-left: 1.5rem;
+            border-bottom: 1px dashed #e8e8e8;
+        }
+
+        .result-row.sub-row .result-label {
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        .result-row.sub-row .result-value {
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .result-label {
+            color: #666;
+            font-size: 0.95rem;
+        }
+
+        .result-value {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .result-value.negative {
+            color: #555555;
+        }
+
+        .result-value.positive {
+            color: var(--secondary-color);
+        }
+
+        .seller-gets {
+            background: linear-gradient(135deg, #333333, #1a1a1a);
+            color: white;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .seller-gets .result-label {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 1rem;
+        }
+
+        .seller-gets .result-value {
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .advanced-section {
+            margin-top: 1.5rem;
+        }
+
+        .advanced-toggle {
+            background: none;
+            border: 2px dashed #ccc;
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            width: 100%;
+            color: #666;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .advanced-toggle:hover {
+            border-color: #333333;
+            color: #333333;
+        }
+
+        .advanced-toggle:not(.collapsed) {
+            border-style: solid;
+            border-color: #333333;
+            color: #333333;
+        }
+
+        .advanced-content {
+            background: #fafafa;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .form-check {
+            padding: 0.5rem 0;
+            padding-left: 2rem;
+        }
+
+        .form-check-input {
+            width: 1.2rem;
+            height: 1.2rem;
+            margin-top: 0.15rem;
+        }
+
+        .form-check-input:checked {
+            background-color: #333333;
+            border-color: #333333;
+        }
+
+        .info-icon {
+            color: #999;
+            cursor: help;
+            margin-left: 0.25rem;
+        }
+
+        @media (max-width: 576px) {
+            .card-body {
+                padding: 1.25rem;
+            }
+
+            .seller-gets .result-value {
+                font-size: 1.25rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-4 py-md-5">
+        <div class="row justify-content-center">
+            <div class="col-12 col-md-10 col-lg-6">
+                <div class="calculator-card">
+                    <div class="card-header text-center">
+                        <h1><i class="bi bi-calculator me-2"></i>eBay TCG Fee Calculator</h1>
+                    </div>
+                    <div class="card-body">
+                        <!-- Account Type -->
+                        <div class="mb-3">
+                            <label class="form-label">Account Type</label>
+                            <div class="dropdown custom-dropdown">
+                                <button class="dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" id="accountTypeButton">
+                                    <span class="dropdown-text">Private Seller</span>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item active" href="#" data-value="private">Private Seller</a></li>
+                                    <li><a class="dropdown-item" href="#" data-value="business">Business Seller</a></li>
+                                </ul>
+                                <input type="hidden" id="accountType" value="private">
+                            </div>
+                        </div>
+
+                        <!-- Price Input -->
+                        <div class="mb-3">
+                            <label for="buyerPrice" class="form-label">
+                                <span id="buyerPaysLabel">Buyer Pays</span>
+                                <i class="bi bi-info-circle info-icon" data-bs-toggle="tooltip" title="The total price the buyer sees including item price"></i>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text">£</span>
+                                <input type="number" class="form-control" id="buyerPrice" placeholder="0.00" step="0.01" min="0">
+                            </div>
+                        </div>
+
+                        <!-- Results Section -->
+                        <div class="results-section">
+                            <div class="result-row">
+                                <span class="result-label">
+                                    <i class="bi bi-percent me-2"></i><span id="ebayFeesLabel">eBay Fees (Buyer Protection)</span>
+                                </span>
+                                <span class="result-value negative" id="ebayFees">-£0.00</span>
+                            </div>
+                            <div class="result-row sub-row" id="fvfRow" style="display: none;">
+                                <span class="result-label" id="fvfLabel"></span>
+                                <span class="result-value negative" id="finalValueFee">-£0.00</span>
+                            </div>
+                            <div class="result-row sub-row" id="topRatedDiscountRow" style="display: none;">
+                                <span class="result-label" id="topRatedDiscountLabel"></span>
+                                <span class="result-value positive" id="topRatedDiscount">+£0.00</span>
+                            </div>
+                            <div class="result-row sub-row" id="regulatoryRow" style="display: none;">
+                                <span class="result-label" id="regulatoryLabel"></span>
+                                <span class="result-value negative" id="regulatoryFee">-£0.00</span>
+                            </div>
+                            <div class="result-row sub-row" id="fixedFeeRow" style="display: none;">
+                                <span class="result-label" id="fixedFeeLabel"></span>
+                                <span class="result-value negative" id="fixedFee">-£0.00</span>
+                            </div>
+                            <div class="result-row" id="vatRow" style="display: none;">
+                                <span class="result-label">
+                                    <i class="bi bi-receipt me-2"></i><span id="vatLabel">VAT on eBay Fees</span>
+                                </span>
+                                <span class="result-value negative" id="vatFee">-£0.00</span>
+                            </div>
+                            <div class="result-row" id="postageRow">
+                                <span class="result-label">
+                                    <i class="bi bi-box-seam me-2"></i><span id="postageLabel">Recommended Postage</span>
+                                </span>
+                                <span class="result-value negative" id="postageCost">-£0.00</span>
+                            </div>
+                        </div>
+
+                        <!-- Seller Gets -->
+                        <div class="seller-gets">
+                            <div class="result-row" style="border: none; padding: 0;">
+                                <span class="result-label">
+                                    <i class="bi bi-wallet2 me-2"></i>You Keep
+                                </span>
+                                <span class="result-value positive" id="sellerGets">£0.00</span>
+                            </div>
+                        </div>
+
+                        <!-- Advanced Options (Collapsed) -->
+                        <div class="advanced-section">
+                            <button class="advanced-toggle collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#advancedOptions" aria-expanded="false" aria-controls="advancedOptions">
+                                <i class="bi bi-gear me-2"></i>Advanced Options
+                                <i class="bi bi-chevron-down float-end"></i>
+                            </button>
+                            <div class="collapse" id="advancedOptions">
+                                <div class="advanced-content">
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="freePostage" checked>
+                                        <label class="form-check-label" for="freePostage">Free Postage</label>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="postageType" class="form-label small">Postage Type</label>
+                                        <select class="form-select form-select-sm" id="postageType">
+                                            <option value="auto" selected>Auto (based on price)</option>
+                                        </select>
+                                    </div>
+                                    <div id="businessOptions">
+                                        <div class="form-check form-switch mb-2">
+                                            <input class="form-check-input" type="checkbox" id="topRatedSeller">
+                                            <label class="form-check-label" for="topRatedSeller">Top-rated Seller</label>
+                                        </div>
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="includeVat" checked>
+                                            <label class="form-check-label" for="includeVat">Include VAT on Fees</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <p class="text-center text-muted mt-3 small">
+                    Fee calculations are estimates and may vary. Only works for UK eBay Collectables category. Always check eBay's official fee structure. Postage assumes letter size packaging.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Initialize tooltips
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl));
+
+        // Fee calculation constants (UK eBay fees)
+        const FEES = {
+            business: {
+                finalValueFee: 0.109,       // 10.9% final value fee
+                topRatedDiscount: 0.10,     // 10% discount for top-rated sellers
+                regulatoryFee: 0.0035,      // 0.35% regulatory operating fee
+                fixedFee: 0.30,             // £0.30 per item
+                minFee: 0.05,
+                vat: 0.20                   // 20% VAT on fees
+            }
+        };
+
+        // Royal Mail postage options (small parcel rates)
+        const POSTAGE = {
+            '2nd_class': {
+                name: '2nd Class',
+                cost: 0.87
+            },
+            '1st_class': {
+                name: '1st Class',
+                cost: 1.7
+            },
+            'tracked_48': {
+                name: 'Tracked 48',
+                cost: 2.75
+            },
+            'tracked_24': {
+                name: 'Tracked 24',
+                cost: 3.65
+            },
+            'special_delivery': {
+                name: 'Special Delivery Guaranteed by 1pm',
+                cost: 8.75
+            }
+        };
+
+        // Calculate Buyer Protection fee (tiered)
+        function calculateBuyerProtectionFee(price) {
+            if (price <= 0) return 0;
+
+            let fee = 0.10; // Flat fee per item
+
+            // 7% of item price up to £20
+            if (price > 0) {
+                fee += Math.min(price, 20) * 0.07;
+            }
+
+            // 4% of portion from £20 to £300
+            if (price > 20) {
+                fee += Math.min(price - 20, 280) * 0.04;
+            }
+
+            // 2% of portion from £300 to £4,000
+            if (price > 300) {
+                fee += Math.min(price - 300, 3700) * 0.02;
+            }
+
+            // No additional fee for amounts over £4,000
+
+            return fee;
+        }
+
+        // Calculate fees
+        function calculateFees() {
+            const accountType = document.getElementById('accountType').value;
+            const buyerPrice = parseFloat(document.getElementById('buyerPrice').value) || 0;
+
+            // Calculate eBay fees based on account type
+            let ebayFees;
+            let vatOnFees = 0;
+            const includeVat = document.getElementById('includeVat').checked;
+
+            if (accountType === 'private') {
+                // Private sellers pay Buyer Protection fee
+                ebayFees = calculateBuyerProtectionFee(buyerPrice);
+                document.getElementById('ebayFeesLabel').textContent = 'eBay Fees (Buyer Protection)';
+
+                // Hide business sub-rows and VAT row
+                document.getElementById('fvfRow').style.display = 'none';
+                document.getElementById('topRatedDiscountRow').style.display = 'none';
+                document.getElementById('regulatoryRow').style.display = 'none';
+                document.getElementById('fixedFeeRow').style.display = 'none';
+                document.getElementById('vatRow').style.display = 'none';
+
+                // Hide business-only options in advanced settings
+                document.getElementById('businessOptions').style.display = 'none';
+            } else {
+                // Show business-only options in advanced settings
+                document.getElementById('businessOptions').style.display = 'block';
+
+                // Business sellers pay Final Value Fee + Regulatory Operating Fee + Fixed Fee
+                const isTopRated = document.getElementById('topRatedSeller').checked;
+                const fvf = buyerPrice * FEES.business.finalValueFee;
+                const topRatedDiscountAmount = isTopRated ? fvf * FEES.business.topRatedDiscount : 0;
+                const fvfAfterDiscount = fvf - topRatedDiscountAmount;
+                const regulatory = buyerPrice * FEES.business.regulatoryFee;
+                const fixed = buyerPrice > 0 ? FEES.business.fixedFee : 0;
+                ebayFees = Math.max(fvfAfterDiscount + regulatory + fixed, buyerPrice > 0 ? FEES.business.minFee : 0);
+
+                // Calculate VAT on eBay fees (including fixed fee)
+                if (includeVat && buyerPrice > 0) {
+                    vatOnFees = ebayFees * FEES.business.vat;
+                }
+
+                document.getElementById('ebayFeesLabel').textContent = 'eBay Fees';
+
+                // Show and update business sub-rows
+                document.getElementById('fvfRow').style.display = 'flex';
+                document.getElementById('regulatoryRow').style.display = 'flex';
+                document.getElementById('fixedFeeRow').style.display = 'flex';
+                document.getElementById('fvfLabel').textContent = `Final Value Fee (${(FEES.business.finalValueFee * 100).toFixed(1)}%)`;
+                document.getElementById('regulatoryLabel').textContent = `Regulatory Operating Fee (${(FEES.business.regulatoryFee * 100).toFixed(2)}%)`;
+                document.getElementById('fixedFeeLabel').textContent = `Fixed Fee (£${FEES.business.fixedFee.toFixed(2)}/item)`;
+                document.getElementById('finalValueFee').textContent = `-£${fvf.toFixed(2)}`;
+                document.getElementById('regulatoryFee').textContent = `-£${regulatory.toFixed(2)}`;
+                document.getElementById('fixedFee').textContent = `-£${fixed.toFixed(2)}`;
+
+                // Show/hide top-rated discount row
+                document.getElementById('topRatedDiscountRow').style.display = isTopRated ? 'flex' : 'none';
+                document.getElementById('topRatedDiscountLabel').textContent = `Top-rated Discount (${(FEES.business.topRatedDiscount * 100).toFixed(0)}%)`;
+                document.getElementById('topRatedDiscount').textContent = `+£${topRatedDiscountAmount.toFixed(2)}`;
+
+                // Show/hide VAT row
+                document.getElementById('vatRow').style.display = includeVat ? 'flex' : 'none';
+                document.getElementById('vatLabel').textContent = `VAT on eBay Fees (${(FEES.business.vat * 100).toFixed(0)}%)`;
+                document.getElementById('vatFee').textContent = `-£${vatOnFees.toFixed(2)}`;
+            }
+
+            // Get postage based on selection or auto-select based on price
+            const freePostage = document.getElementById('freePostage').checked;
+            const postageTypeSelection = document.getElementById('postageType').value;
+
+            let selectedPostage;
+            if (postageTypeSelection === 'auto') {
+                // Auto-select based on price
+                selectedPostage = '2nd_class';
+                if (buyerPrice >= 150) {
+                    selectedPostage = 'special_delivery';
+                } else if (buyerPrice >= 20) {
+                    selectedPostage = 'tracked_48';
+                }
+            } else {
+                selectedPostage = postageTypeSelection;
+            }
+            const postage = freePostage && buyerPrice > 0 ? POSTAGE[selectedPostage].cost : 0;
+
+            // Show/hide postage row and update labels
+            document.getElementById('postageRow').style.display = freePostage ? 'flex' : 'none';
+            document.getElementById('buyerPaysLabel').textContent = freePostage ? 'Buyer Pays' : 'Buyer Pays (+ postage)';
+            document.getElementById('postageLabel').textContent = `Postage (${POSTAGE[selectedPostage].name})`;
+
+            // Calculate seller keeps (including VAT for business sellers)
+            const sellerGets = buyerPrice - ebayFees - vatOnFees - postage;
+
+            // Update display
+            document.getElementById('ebayFees').textContent = `-£${ebayFees.toFixed(2)}`;
+            document.getElementById('postageCost').textContent = `-£${postage.toFixed(2)}`;
+
+            const sellerGetsEl = document.getElementById('sellerGets');
+            sellerGetsEl.textContent = `£${sellerGets.toFixed(2)}`;
+            sellerGetsEl.className = sellerGets >= 0 ? 'result-value positive' : 'result-value negative';
+        }
+
+        // Populate postage dropdown from POSTAGE object
+        const postageSelect = document.getElementById('postageType');
+        Object.entries(POSTAGE).forEach(([key, value]) => {
+            const option = document.createElement('option');
+            option.value = key;
+            option.textContent = `${value.name} - £${value.cost.toFixed(2)}`;
+            postageSelect.appendChild(option);
+        });
+
+        // Event listeners
+        document.getElementById('buyerPrice').addEventListener('input', calculateFees);
+        document.getElementById('freePostage').addEventListener('change', calculateFees);
+        document.getElementById('postageType').addEventListener('change', calculateFees);
+        document.getElementById('topRatedSeller').addEventListener('change', calculateFees);
+        document.getElementById('includeVat').addEventListener('change', calculateFees);
+
+        // Custom dropdown handling
+        document.querySelectorAll('.custom-dropdown .dropdown-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                const dropdown = this.closest('.custom-dropdown');
+                const buttonText = dropdown.querySelector('.dropdown-text');
+                const hiddenInput = dropdown.querySelector('input[type="hidden"]');
+
+                // Update active state
+                dropdown.querySelectorAll('.dropdown-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+
+                // Update button text and hidden input value
+                buttonText.textContent = this.textContent;
+                hiddenInput.value = this.dataset.value;
+
+                // Recalculate fees
+                calculateFees();
+            });
+        });
+
+        // Initial calculation
+        calculateFees();
+    </script>
+</body>
+</html>
