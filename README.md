@@ -25,7 +25,8 @@ A static site for quick eBay fee calculation, specifically designed for UK selle
 |----------|------|
 | Final Value Fee | 10.9% |
 | Regulatory Operating Fee | 0.35% |
-| Fixed Fee | £0.30 per item |
+| Fixed Fee (orders ≤£10) | £0.10 per item |
+| Fixed Fee (orders >£10) | £0.30 per item |
 | Minimum Fee | £0.05 |
 | VAT on Fees | 20% |
 | Top-Rated Seller Discount | 10% off FVF |
