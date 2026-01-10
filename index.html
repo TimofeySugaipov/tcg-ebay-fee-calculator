@@ -459,6 +459,8 @@
                 topRatedDiscount: 0.10,     // 10% discount for top-rated sellers
                 regulatoryFee: 0.0035,      // 0.35% regulatory operating fee
                 fixedFee: 0.30,             // £0.30 per item
+                fixedFeeLow: 0.10,          // £0.10 for orders up to £10
+                fixedFeeThreshold: 10,      // Threshold for lower fixed fee
                 minFee: 0.05,
                 vat: 0.20                   // 20% VAT on fees
             }
@@ -488,30 +490,63 @@
             }
         };
 
-        // Calculate Buyer Protection fee (tiered)
-        function calculateBuyerProtectionFee(price) {
-            if (price <= 0) return 0;
+        // Buyer Protection fee rates (private sellers)
+        const BUYER_PROTECTION = {
+            flatFee: 0.10,
+            tier1: { threshold: 20, rate: 0.07 },
+            tier2: { threshold: 300, rate: 0.04 },
+            tier3: { threshold: 4000, rate: 0.02 },
+        };
 
-            let fee = 0.10; // Flat fee per item
+        const BUYER_PROTECTION_MAX_FEE = BUYER_PROTECTION.flatFee + (BUYER_PROTECTION.tier1.threshold * BUYER_PROTECTION.tier1.rate) + ((BUYER_PROTECTION.tier2.threshold - BUYER_PROTECTION.tier1.threshold) * BUYER_PROTECTION.tier2.rate) + ((BUYER_PROTECTION.tier3.threshold - BUYER_PROTECTION.tier2.threshold) * BUYER_PROTECTION.tier3.rate);
 
-            // 7% of item price up to £20
-            if (price > 0) {
-                fee += Math.min(price, 20) * 0.07;
+        // Calculate Buyer Protection fee from subtotal (tiered)
+        function calculateBuyerProtectionFee(subtotal) {
+            if (subtotal <= 0) return 0;
+
+            const { flatFee, tier1, tier2, tier3 } = BUYER_PROTECTION;
+
+            let fee = flatFee;
+
+            fee += Math.min(subtotal, tier1.threshold) * tier1.rate;
+
+            if (subtotal > tier3.threshold) {
+                fee = BUYER_PROTECTION_MAX_FEE;
+            } else if (subtotal > tier2.threshold) {
+                fee += ((subtotal - tier2.threshold) * tier3.rate) + ((tier2.threshold - tier1.threshold) * tier2.rate);
+            } else if (subtotal > tier1.threshold) {
+                fee += (subtotal - tier1.threshold) * tier2.rate;
             }
-
-            // 4% of portion from £20 to £300
-            if (price > 20) {
-                fee += Math.min(price - 20, 280) * 0.04;
-            }
-
-            // 2% of portion from £300 to £4,000
-            if (price > 300) {
-                fee += Math.min(price - 300, 3700) * 0.02;
-            }
-
-            // No additional fee for amounts over £4,000
 
             return fee;
+        }
+
+        // Reverse calculate subtotal from buyer pays amount
+        function getSubtotalFromBuyerPays(buyerPays) {
+            if (buyerPays <= 0) return 0;
+
+            const { flatFee, tier1, tier2, tier3 } = BUYER_PROTECTION
+            const adjustedAmount = buyerPays - flatFee;
+            const maxThreshold = tier3.threshold + BUYER_PROTECTION_MAX_FEE;
+
+            let subtotal;
+
+            
+            if (buyerPays >= maxThreshold) {
+                // Above max fee cutoff: subtract all tier fees
+                subtotal = buyerPays - BUYER_PROTECTION_MAX_FEE;
+            } else if (buyerPays >= tier2.threshold && buyerPays < maxThreshold) {
+                // Between tier 2 and 3 thresholds: reverse tier 3 calculation
+                subtotal = (adjustedAmount - (tier1.threshold * (1 + tier1.rate)) - ((tier2.threshold - tier1.threshold) * (1 + tier2.rate))) / (1 + tier3.rate) + tier2.threshold;
+            } else if (buyerPays >= tier1.threshold && buyerPays < tier2.threshold) {
+                // Between tier 1 and 2 thresholds: reverse tier 2 calculation
+                subtotal = (adjustedAmount - (tier1.threshold * (1 + tier1.rate))) / (1 + tier2.rate) + tier1.threshold;
+            } else {
+                // Below tier 1 threshold: reverse tier 1 calculation
+                subtotal = adjustedAmount / (1 + tier1.rate);
+            }
+
+            return Math.max(0, subtotal);
         }
 
         // Calculate fees
@@ -526,7 +561,9 @@
 
             if (accountType === 'private') {
                 // Private sellers pay Buyer Protection fee
-                ebayFees = calculateBuyerProtectionFee(buyerPrice);
+                // First reverse calculate the subtotal from buyer pays, then calculate fees on subtotal
+                const subtotal = getSubtotalFromBuyerPays(buyerPrice);
+                ebayFees = calculateBuyerProtectionFee(subtotal);
                 document.getElementById('ebayFeesLabel').textContent = 'eBay Fees (Buyer Protection)';
 
                 // Hide business sub-rows and VAT row
@@ -548,7 +585,7 @@
                 const topRatedDiscountAmount = isTopRated ? fvf * FEES.business.topRatedDiscount : 0;
                 const fvfAfterDiscount = fvf - topRatedDiscountAmount;
                 const regulatory = buyerPrice * FEES.business.regulatoryFee;
-                const fixed = buyerPrice > 0 ? FEES.business.fixedFee : 0;
+                const fixed = buyerPrice > 0 ? (buyerPrice <= FEES.business.fixedFeeThreshold ? FEES.business.fixedFeeLow : FEES.business.fixedFee) : 0;
                 ebayFees = Math.max(fvfAfterDiscount + regulatory + fixed, buyerPrice > 0 ? FEES.business.minFee : 0);
 
                 // Calculate VAT on eBay fees (including fixed fee)
@@ -564,7 +601,7 @@
                 document.getElementById('fixedFeeRow').style.display = 'flex';
                 document.getElementById('fvfLabel').textContent = `Final Value Fee (${(FEES.business.finalValueFee * 100).toFixed(1)}%)`;
                 document.getElementById('regulatoryLabel').textContent = `Regulatory Operating Fee (${(FEES.business.regulatoryFee * 100).toFixed(2)}%)`;
-                document.getElementById('fixedFeeLabel').textContent = `Fixed Fee (£${FEES.business.fixedFee.toFixed(2)}/item)`;
+                document.getElementById('fixedFeeLabel').textContent = `Fixed Fee (£${fixed.toFixed(2)}/item)`;
                 document.getElementById('finalValueFee').textContent = `-£${fvf.toFixed(2)}`;
                 document.getElementById('regulatoryFee').textContent = `-£${regulatory.toFixed(2)}`;
                 document.getElementById('fixedFee').textContent = `-£${fixed.toFixed(2)}`;
