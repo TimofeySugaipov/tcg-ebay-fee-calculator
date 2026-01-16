@@ -400,15 +400,15 @@
                             </button>
                             <div class="collapse" id="advancedOptions">
                                 <div class="advanced-content">
-                                    <div class="form-check form-switch mb-3">
-                                        <input class="form-check-input" type="checkbox" id="freePostage" checked>
-                                        <label class="form-check-label" for="freePostage">Free Postage</label>
-                                    </div>
                                     <div class="mb-3">
                                         <label for="postageType" class="form-label small">Postage Type</label>
                                         <select class="form-select form-select-sm" id="postageType">
                                             <option value="auto" selected>Auto (based on price)</option>
                                         </select>
+                                    </div>
+                                    <div class="form-check form-switch mb-3">
+                                        <input class="form-check-input" type="checkbox" id="buyerPaysPostage">
+                                        <label class="form-check-label" for="buyerPaysPostage">Buyer Pays Postage</label>
                                     </div>
                                     <div id="businessOptions">
                                         <div class="form-check form-switch mb-2">
@@ -471,23 +471,28 @@
         const POSTAGE = {
             '2nd_class': {
                 name: '2nd Class',
-                cost: 0.87
+                cost: 0.87,
+                link: 'https://send.royalmail.com/send/destination?compensation=20&country=GBR&format=Letter&service=OLP2&weight=100&weightUnit=G'
             },
             '1st_class': {
                 name: '1st Class',
-                cost: 1.7
+                cost: 1.7,
+                link: 'https://send.royalmail.com/send/destination?compensation=20&country=GBR&format=Letter&service=OLP1&weight=100&weightUnit=G'
             },
             'tracked_48': {
                 name: 'Tracked 48',
-                cost: 2.75
+                cost: 2.75, 
+                link: 'https://send.royalmail.com/send/destination?compensation=75&country=GBR&format=LargeLetter&service=TOLP48&weight=1000&weightUnit=G'
             },
             'tracked_24': {
                 name: 'Tracked 24',
-                cost: 3.65
+                cost: 3.65,
+                link: 'https://send.royalmail.com/send/destination?compensation=75&country=GBR&format=LargeLetter&service=TOLP24&weight=1000&weightUnit=G'
             },
             'special_delivery': {
                 name: 'Special Delivery Guaranteed by 1pm',
-                cost: 8.75
+                cost: 8.75,
+                link: 'https://send.royalmail.com/send/destination?compensation=750&country=GBR&format=Letter&service=SDOLP1PM&weight=100&weightUnit=G'
             }
         };
 
@@ -619,7 +624,7 @@
             }
 
             // Get postage based on selection or auto-select based on price
-            const freePostage = document.getElementById('freePostage').checked;
+            const buyerPaysPostage = document.getElementById('buyerPaysPostage').checked;
             const postageTypeSelection = document.getElementById('postageType').value;
 
             let selectedPostage;
@@ -634,12 +639,19 @@
             } else {
                 selectedPostage = postageTypeSelection;
             }
-            const postage = freePostage && buyerPrice > 0 ? POSTAGE[selectedPostage].cost : 0;
+            // If buyer pays postage, don't deduct it from seller's profit
+            const postage = !buyerPaysPostage && buyerPrice > 0 ? POSTAGE[selectedPostage].cost : 0;
 
             // Show/hide postage row and update labels
-            document.getElementById('postageRow').style.display = freePostage ? 'flex' : 'none';
-            document.getElementById('buyerPaysLabel').textContent = freePostage ? 'Buyer Pays' : 'Buyer Pays (+ postage)';
-            document.getElementById('postageLabel').textContent = `Postage (${POSTAGE[selectedPostage].name})`;
+            document.getElementById('postageRow').style.display = !buyerPaysPostage ? 'flex' : 'none';
+            document.getElementById('buyerPaysLabel').textContent = !buyerPaysPostage ? 'Buyer Pays' : 'Buyer Pays (+ postage)';
+            const postageData = POSTAGE[selectedPostage];
+            const postageLabel = document.getElementById('postageLabel');
+            if (postageData.link) {
+                postageLabel.innerHTML = `Postage (<a href="${postageData.link}" target="_blank" rel="noopener noreferrer">${postageData.name}</a>)`;
+            } else {
+                postageLabel.textContent = `Postage (${postageData.name})`;
+            }
 
             // Calculate seller keeps (including VAT for business sellers)
             const sellerGets = buyerPrice - ebayFees - vatOnFees - postage;
@@ -664,7 +676,7 @@
 
         // Event listeners
         document.getElementById('buyerPrice').addEventListener('input', calculateFees);
-        document.getElementById('freePostage').addEventListener('change', calculateFees);
+        document.getElementById('buyerPaysPostage').addEventListener('change', calculateFees);
         document.getElementById('postageType').addEventListener('change', calculateFees);
         document.getElementById('topRatedSeller').addEventListener('change', calculateFees);
         document.getElementById('includeVat').addEventListener('change', calculateFees);
