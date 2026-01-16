@@ -306,6 +306,21 @@
         .footer-link:active {
             transform: translateY(-1px);
         }
+
+        .buy-postage-btn {
+            border: 2px solid #28a745;
+            color: #28a745;
+            background: transparent;
+            border-radius: 10px;
+            padding: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .buy-postage-btn:hover,
+        .buy-postage-btn:active {
+            background: #28a745;
+            color: white;
+        }
     </style>
 </head>
 <body>
@@ -391,6 +406,11 @@
                                 <span class="result-value positive" id="sellerGets">£0.00</span>
                             </div>
                         </div>
+
+                        <!-- Buy Postage Button -->
+                        <a href="#" id="buyPostageBtn" class="btn w-100 mt-3 buy-postage-btn" target="_blank" rel="noopener noreferrer">
+                            <i class="bi bi-cart me-2"></i>Buy Postage
+                        </a>
 
                         <!-- Advanced Options (Collapsed) -->
                         <div class="advanced-section">
@@ -646,12 +666,10 @@
             document.getElementById('postageRow').style.display = !buyerPaysPostage ? 'flex' : 'none';
             document.getElementById('buyerPaysLabel').textContent = !buyerPaysPostage ? 'Buyer Pays' : 'Buyer Pays (+ postage)';
             const postageData = POSTAGE[selectedPostage];
-            const postageLabel = document.getElementById('postageLabel');
-            if (postageData.link) {
-                postageLabel.innerHTML = `Postage (<a href="${postageData.link}" target="_blank" rel="noopener noreferrer">${postageData.name}</a>)`;
-            } else {
-                postageLabel.textContent = `Postage (${postageData.name})`;
-            }
+            document.getElementById('postageLabel').textContent = `Postage (${postageData.name})`;
+
+            // Update buy postage button link (always visible)
+            document.getElementById('buyPostageBtn').href = postageData.link || '#';
 
             // Calculate seller keeps (including VAT for business sellers)
             const sellerGets = buyerPrice - ebayFees - vatOnFees - postage;
