@@ -651,7 +651,7 @@
             if (postageTypeSelection === 'auto') {
                 // Auto-select based on price
                 selectedPostage = '2nd_class';
-                if (buyerPrice >= 150) {
+                if (buyerPrice > 75) {
                     selectedPostage = 'special_delivery';
                 } else if (buyerPrice >= 20) {
                     selectedPostage = 'tracked_48';
