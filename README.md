@@ -39,9 +39,9 @@ Automatically selects Royal Mail postage based on item price, or manually choose
 |---------|------|-------------------|
 | 2nd Class | £0.87 | Items under £20 |
 | 1st Class | £1.70 | — |
-| Tracked 48 | £2.75 | Items £20 – £150 |
+| Tracked 48 | £2.75 | Items £20 – £75 |
 | Tracked 24 | £3.65 | — |
-| Special Delivery (1pm) | £8.75 | Items £150+ |
+| Special Delivery (1pm) | £8.75 | Items over £75 |
 
 *Auto Postage is based on cheapest fully insured service for order value. Postage rates assume letter-size packaging.*
 
